@@ -18,31 +18,40 @@ abstract class LoginPageViewModel extends State<LoginPage> {
   }
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  GoogleSignInAccount _googleAccount;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   /// call signIn routine
-  Future<FirebaseUser> signInUser() async {
-    final GoogleSignInAccount googleSignInAccount =
-        await _googleSignIn.signIn();
-    final GoogleSignInAuthentication googleSignInAuthentication =
-        await googleSignInAccount.authentication;
+  Future<void> signInUser() async {
+    _googleAccount = await _googleSignIn.signIn();
+    final GoogleSignInAuthentication googleAuth =
+        await _googleAccount.authentication;
     final AuthCredential credential = GoogleAuthProvider.getCredential(
-        idToken: googleSignInAuthentication.idToken,
-        accessToken: googleSignInAuthentication.accessToken);
-    final FirebaseUser firebaseUser =
-        await _auth.signInWithCredential(credential);
-    return firebaseUser;
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final FirebaseUser user = await _auth.signInWithCredential(credential);
+    assert(user.email != null);
+    assert(user.displayName != null);
+    assert(!user.isAnonymous);
+    assert(await user.getIdToken() != null);
+
+    final FirebaseUser currentUser = await _auth.currentUser();
+    assert(user.uid == currentUser.uid);
+    print('signInWithGoogle succeeded: $user');
   }
 
   /// handle signed in user
   void handleUser(FirebaseUser user) {
     if (user == null) {
+      print('No User');
       Fluttertoast.showToast(
           msg: 'Failed to login',
           toastLength: Toast.LENGTH_SHORT,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIos: 1);
     } else {
+      print('Found User');
       User()
         ..nameMe(user.displayName)
         ..assignEmail(user.email)

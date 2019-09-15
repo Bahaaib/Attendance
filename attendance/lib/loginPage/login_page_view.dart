@@ -49,7 +49,7 @@ class LoginPageView extends LoginPageViewModel {
                             color: const Color(0xFFFFFFFF),
                             onPressed: () =>
                                 signInUser()
-                                    .then(handleUser),
+                                    .then<void>(handleUser),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
